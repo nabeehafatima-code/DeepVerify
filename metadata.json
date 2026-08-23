@@ -1,0 +1,6 @@
+{
+  "name": "DeepVerify",
+  "description": "AI-Powered Deepfake Detection & Media Verification System for Images, Videos, and Audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
