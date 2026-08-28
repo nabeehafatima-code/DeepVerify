@@ -11,11 +11,35 @@ import {
   Sparkles,
   AlertCircle
 } from 'lucide-react';
-import { SuspiciousRegion } from '../types';
+
+interface HeatmapRegion {
+  id: string | number;
+  label: string;
+  confidence: number;
+  description: string;
+  box?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+}
+
+declare namespace JSX {
+  interface IntrinsicElements {
+    [elementName: string]: any;
+  }
+}
+
+declare module 'react/jsx-runtime' {
+  export const Fragment: any;
+  export const jsx: any;
+  export const jsxs: any;
+}
 
 interface HeatmapPanelProps {
   imageUrl?: string;
-  suspiciousRegions?: SuspiciousRegion[];
+  suspiciousRegions?: HeatmapRegion[];
   filename?: string;
   isDeepfake?: boolean;
 }
@@ -177,7 +201,9 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                   max="1.0"
                   step="0.05"
                   value={heatmapOpacity}
-                  onChange={(e) => setHeatmapOpacity(parseFloat(e.target.value))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setHeatmapOpacity(parseFloat(e.target.value))
+                  }
                   className="accent-rose-500 w-32 cursor-pointer"
                 />
                 <span className="text-slate-200 font-mono text-[11px]">

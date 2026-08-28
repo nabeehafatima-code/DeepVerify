@@ -9,6 +9,7 @@ from app.schemas.analysis import AnalysisResponse
 from app.services.inference_service import ModelNotConfiguredError, get_inference_service
 from app.services.preprocessing import decode_image, validate_image_pixels
 from app.services.report_service import save_report
+from app.services.explainability import generate_heatmap
 
 router = APIRouter(tags=['analysis'])
 
@@ -45,9 +46,17 @@ async def analyze_image(file: UploadFile = File(...)) -> AnalysisResponse:
 
     probability = prediction['deepfake_probability']
     risk_level = 'high' if probability >= 0.8 else 'medium' if probability >= 0.5 else 'low'
+    try:
+        heatmap_path, suspicious_regions = generate_heatmap(image, prediction)
+    except Exception as exc:
+        heatmap_path, suspicious_regions = None, []
+        print(f'Heatmap generation failed: {exc}')
+
     explanation = [
         'Classification probability returned by the configured image detector.',
-        'No localization findings were returned by the configured model.'
+        'Suspicious regions identified using Grad-CAM explainability.'
+        if heatmap_path
+        else 'No localization findings were returned by the configured model.'
     ]
     report = AnalysisResponse(
         verification_id=f'DV-{datetime.now(timezone.utc).year}-{uuid4().hex[:8].upper()}',
@@ -63,10 +72,15 @@ async def analyze_image(file: UploadFile = File(...)) -> AnalysisResponse:
         risk_level=risk_level,
         explanation=explanation,
         detailed_findings=[],
-        suspicious_regions=[],
+        suspicious_regions=suspicious_regions,
+        #added from here for heatmap
+        model_details={
+            'name': settings.deepfake_model_id,
+            'raw_outputs': prediction.get('raw_outputs'),
+            'heatmap_path': str(heatmap_path) if heatmap_path else None,
+        },
         timestamp=datetime.now(timezone.utc),
         model_version=settings.model_version,
-        model_details={'name': settings.deepfake_model_id, 'raw_outputs': prediction['raw_outputs']},
     )
     save_report(report)
     return report

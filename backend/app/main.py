@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Dict
 
 from app.api.routes.analyze import router as analyze_router
 from app.api.routes.reports import router as reports_router
@@ -16,7 +17,7 @@ app.add_middleware(
 
 
 @app.get('/health')
-async def health() -> dict[str, str]:
+async def health() -> Dict[str, str]:
     return {'status': 'ok', 'service': settings.app_name}
 
 
