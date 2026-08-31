@@ -14,9 +14,15 @@ class Settings(BaseSettings):
     api_prefix: str = '/api'
     cors_origins: str = 'http://localhost:3000'
     max_image_size_mb: int = 25
+    max_video_size_mb: int = 100
+    max_audio_size_mb: int = 25
     deepfake_model_id: str = ''
     model_version: str = 'unconfigured'
     uploads_dir: Path = BACKEND_DIR / 'uploads'
+    model_dataset_label: str = (
+        "Not independently verified by DeepVerify — see backend/MODEL_SELECTION.md "
+        "for the checkpoint publisher's reported training data."
+    )
 
     @property
     def allowed_origins(self) -> list[str]:

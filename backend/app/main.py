@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from typing import Dict
 
 from app.api.routes.analyze import router as analyze_router
@@ -14,6 +15,8 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+app.mount('/uploads', StaticFiles(directory=str(settings.uploads_dir)), name='uploads')
 
 
 @app.get('/health')

@@ -1,8 +1,12 @@
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from PIL import Image
 
 from app.core.config import settings
+
+if TYPE_CHECKING:
+    from transformers import ImageClassificationPipeline
 
 
 class ModelNotConfiguredError(RuntimeError):
@@ -63,6 +67,16 @@ class ImageInferenceService:
             'confidence': confidence,
             'raw_outputs': outputs,
         }
+
+    def model_metadata(self) -> dict:
+        try:
+            classifier = self._load_classifier()
+            config = getattr(classifier.model, 'config', None)
+            architectures = getattr(config, 'architectures', None) if config else None
+            architecture = architectures[0] if architectures else type(classifier.model).__name__
+        except Exception:
+            architecture = 'Unknown (see checkpoint model card)'
+        return {'checkpoint': self.model_id, 'architecture': architecture}
 
 
 @lru_cache(maxsize=1)

@@ -28,6 +28,11 @@ class AnalysisResponse(BaseModel):
     explanation: list[str]
     detailed_findings: list[dict]
     suspicious_regions: list[SuspiciousRegion]
+    frame_analyses: list[dict] | None = None
+    spectral_anomalies: list[dict] | None = None
+    duration: str | None = None
+    resolution: str | None = None
+    sample_rate: str | None = None
     timestamp: datetime
     model_version: str
     model_details: dict

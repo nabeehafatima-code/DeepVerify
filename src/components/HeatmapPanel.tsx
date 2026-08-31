@@ -25,18 +25,6 @@ interface HeatmapRegion {
   };
 }
 
-declare namespace JSX {
-  interface IntrinsicElements {
-    [elementName: string]: any;
-  }
-}
-
-declare module 'react/jsx-runtime' {
-  export const Fragment: any;
-  export const jsx: any;
-  export const jsxs: any;
-}
-
 interface HeatmapPanelProps {
   imageUrl?: string;
   suspiciousRegions?: HeatmapRegion[];
@@ -51,7 +39,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   isDeepfake = true
 }) => {
   const [activeTab, setActiveTab] = useState<'original' | 'analysis' | 'heatmap'>('analysis');
-  const [selectedRegion, setSelectedRegion] = useState<SuspiciousRegion | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<HeatmapRegion | null>(null);
   const [heatmapOpacity, setHeatmapOpacity] = useState<number>(0.75);
 
   return (

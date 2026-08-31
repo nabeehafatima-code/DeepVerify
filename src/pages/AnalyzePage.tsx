@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { MediaType, VerificationReport, AnalysisProgressEvent } from '../types';
 import { mockApiService, DEMO_PRESETS, DemoPreset } from '../services/mockApi';
-import { analyzeImage } from '../services/api';
+import { analyzeImage, analyzeVideo, analyzeAudio } from '../services/api';
 import { UploadZone } from '../components/UploadZone';
 import { AnalysisLoader } from '../components/AnalysisLoader';
 import { ConfidenceRing } from '../components/ConfidenceRing';
@@ -133,14 +133,18 @@ export const AnalyzePage: React.FC = () => {
         throw new Error('No payload available');
       }
 
-      const report = mediaType === 'image'
-        ? await analyzeImage(selectedFile as File, setProgressEvent)
-        : await mockApiService.analyzeMedia(
-            filePayload,
-            mediaType,
-            setProgressEvent,
-            selectedPreset?.expectedResult
-          );
+            const report = selectedFile
+              ? mediaType === 'image'
+                ? await analyzeImage(selectedFile, setProgressEvent)
+                : mediaType === 'video'
+                  ? await analyzeVideo(selectedFile, setProgressEvent)
+                  : await analyzeAudio(selectedFile, setProgressEvent)
+              : await mockApiService.analyzeMedia(
+                  filePayload,
+                  mediaType,
+                  setProgressEvent,
+                  selectedPreset?.expectedResult
+               );
 
       setResult(report);
       setIsAnalyzing(false);

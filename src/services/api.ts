@@ -17,6 +17,11 @@ type BackendAnalysisResponse = {
   explanation: string[];
   detailed_findings: VerificationReport['detailedFindings'];
   suspicious_regions: NonNullable<VerificationReport['suspiciousRegions']>;
+  frame_analyses?: VerificationReport['frameAnalyses'];
+  spectral_anomalies?: VerificationReport['spectralAnomalies'];
+  duration?: string;
+  resolution?: string;
+  sample_rate?: string;
   timestamp: string;
   model_version: string;
   model_details: VerificationReport['modelDetails'];
@@ -39,6 +44,11 @@ function toVerificationReport(data: BackendAnalysisResponse, previewUrl: string)
     explanation: data.explanation,
     detailedFindings: data.detailed_findings,
     suspiciousRegions: data.suspicious_regions,
+    frameAnalyses: data.frame_analyses,
+    spectralAnomalies: data.spectral_anomalies,
+    duration: data.duration,
+    resolution: data.resolution,
+    sampleRate: data.sample_rate,
     timestamp: data.timestamp,
     modelVersion: data.model_version,
     modelDetails: data.model_details,
@@ -47,20 +57,19 @@ function toVerificationReport(data: BackendAnalysisResponse, previewUrl: string)
   };
 }
 
-export async function analyzeImage(
+async function postFile(
+  endpoint: string,
   file: File,
-  onProgress?: (event: AnalysisProgressEvent) => void,
-): Promise<VerificationReport> {
-  onProgress?.({ stepIndex: 1, totalSteps: 3, stepName: 'Uploading Image', progressPercent: 15, telemetryMessage: 'Sending image to the FastAPI inference gateway...' });
+  onProgress: ((event: AnalysisProgressEvent) => void) | undefined,
+  stepName: string,
+): Promise<BackendAnalysisResponse> {
+  onProgress?.({ stepIndex: 1, totalSteps: 3, stepName: `Uploading ${stepName}`, progressPercent: 15, telemetryMessage: 'Sending file to the FastAPI inference gateway...' });
   const formData = new FormData();
   formData.append('file', file);
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}/api/analyze/image`, {
-      method: 'POST',
-      body: formData,
-    });
+    response = await fetch(`${API_BASE_URL}${endpoint}`, { method: 'POST', body: formData });
   } catch (cause) {
     const reason = cause instanceof Error ? ` (${cause.message})` : '';
     throw new Error(
@@ -68,9 +77,9 @@ export async function analyzeImage(
     );
   }
 
-  onProgress?.({ stepIndex: 2, totalSteps: 3, stepName: 'AI Image Analysis', progressPercent: 65, telemetryMessage: 'The configured detector is processing the uploaded image...' });
+  onProgress?.({ stepIndex: 2, totalSteps: 3, stepName: `AI ${stepName} Analysis`, progressPercent: 65, telemetryMessage: 'The configured detector is processing the upload...' });
   if (!response.ok) {
-    let message = `Image analysis failed (${response.status}).`;
+    let message = `${stepName} analysis failed (${response.status}).`;
     try {
       const error = await response.json() as { detail?: string };
       message = error.detail || message;
@@ -82,5 +91,20 @@ export async function analyzeImage(
 
   const data = await response.json() as BackendAnalysisResponse;
   onProgress?.({ stepIndex: 3, totalSteps: 3, stepName: 'Verification Complete', progressPercent: 100, telemetryMessage: 'Backend inference completed and returned a structured report.' });
+  return data;
+}
+
+export async function analyzeImage(file: File, onProgress?: (event: AnalysisProgressEvent) => void): Promise<VerificationReport> {
+  const data = await postFile('/api/analyze/image', file, onProgress, 'Image');
+  return toVerificationReport(data, URL.createObjectURL(file));
+}
+
+export async function analyzeVideo(file: File, onProgress?: (event: AnalysisProgressEvent) => void): Promise<VerificationReport> {
+  const data = await postFile('/api/analyze/video', file, onProgress, 'Video');
+  return toVerificationReport(data, URL.createObjectURL(file));
+}
+
+export async function analyzeAudio(file: File, onProgress?: (event: AnalysisProgressEvent) => void): Promise<VerificationReport> {
+  const data = await postFile('/api/analyze/audio', file, onProgress, 'Audio');
   return toVerificationReport(data, URL.createObjectURL(file));
 }
