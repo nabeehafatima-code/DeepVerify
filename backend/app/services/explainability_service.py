@@ -16,35 +16,49 @@ GRID_SIZE = 4
 TOP_REGIONS = 3
 
 
-def _attention_rollout(model, pixel_values: torch.Tensor) -> np.ndarray:
-    model.eval()
-    with torch.no_grad():
-        outputs = model(
-            pixel_values=pixel_values,
-            output_attentions=True,
-            return_dict=True,
-        )
+def _predicted_class_index(model, prediction: dict) -> int:
+    labels = getattr(model.config, 'id2label', {}) or {}
+    target_prediction = prediction.get('prediction')
+    for index, label in labels.items():
+        normalized = str(label).strip().lower()
+        is_fake = normalized in {'fake', 'deepfake', 'synthetic', 'manipulated', 'artificial', 'generated', 'ai'}
+        is_real = normalized in {'real', 'authentic', 'genuine', 'human'}
+        if target_prediction == 'deepfake' and is_fake:
+            return int(index)
+        if target_prediction == 'authentic' and is_real:
+            return int(index)
+    raise ValueError(f'Could not map predicted class {target_prediction!r} to the model labels.')
 
-    attentions = outputs.attentions
-    if not attentions:
-        raise ValueError('The model did not return attention tensors.')
 
-    rollout = np.eye(attentions[0].shape[-1], dtype=np.float32)
-    for attention in attentions:
-        layer_attention = attention[0].detach().cpu().numpy()
-        layer_attention = layer_attention.mean(axis=0)
-        layer_attention = layer_attention + np.eye(layer_attention.shape[0], dtype=np.float32)
-        layer_attention = layer_attention / np.clip(layer_attention.sum(axis=-1, keepdims=True), 1e-8, None)
-        rollout = layer_attention @ rollout
+def _swin_grad_cam(model, pixel_values: torch.Tensor, prediction: dict) -> np.ndarray:
+    target_layer = model.swin.encoder.layers[-1].blocks[-1].output
+    activation: torch.Tensor | None = None
 
-    class_attention = rollout[0, 1:]
-    grid_size = int(np.sqrt(class_attention.shape[0]))
-    if grid_size * grid_size != class_attention.shape[0]:
-        raise ValueError('Unexpected ViT patch count for attention rollout.')
+    def capture_activation(_module, _inputs, output):
+        nonlocal activation
+        activation = output
+        activation.retain_grad()
 
-    patch_attention = class_attention.reshape(grid_size, grid_size)
-    patch_attention = patch_attention / np.clip(patch_attention.max(), 1e-8, None)
-    return patch_attention
+    hook = target_layer.register_forward_hook(capture_activation)
+    try:
+        model.eval()
+        model.zero_grad(set_to_none=True)
+        outputs = model(pixel_values=pixel_values, return_dict=True)
+        class_index = _predicted_class_index(model, prediction)
+        outputs.logits[0, class_index].backward()
+        if activation is None or activation.grad is None:
+            raise ValueError('The Swin target layer did not produce gradients.')
+
+        activations = activation[0]
+        gradients = activation.grad[0]
+        weights = gradients.mean(dim=0)
+        cam = torch.relu((activations * weights).sum(dim=-1))
+        grid_size = int(np.sqrt(cam.shape[0]))
+        if grid_size * grid_size != cam.shape[0]:
+            raise ValueError(f'Unexpected Swin token count: {cam.shape[0]}.')
+        return cam.reshape(grid_size, grid_size).detach().cpu().numpy()
+    finally:
+        hook.remove()
 
 
 def _normalize_heatmap(heatmap: np.ndarray) -> np.ndarray:
@@ -106,7 +120,7 @@ def _build_regions_from_attention(attention_map: np.ndarray, prediction: dict) -
     return selected
 
 
-def generate_heatmap(image: Image.Image, prediction: dict) -> tuple[Optional[Path], list[dict], dict]:
+def generate_heatmap(image: Image.Image, prediction: dict, verification_id: str | None = None) -> tuple[Optional[Path], list[dict], dict]:
     model_id = settings.deepfake_model_id
     if not model_id:
         return None, [], {'status': 'unavailable', 'method': 'attention-rollout', 'summary': {'low': 0, 'moderate': 0, 'high': 0}}
@@ -118,7 +132,7 @@ def generate_heatmap(image: Image.Image, prediction: dict) -> tuple[Optional[Pat
 
         inputs = processor(images=image, return_tensors='pt')
         pixel_values = inputs['pixel_values']
-        attention_map = _attention_rollout(model, pixel_values)
+        attention_map = _swin_grad_cam(model, pixel_values, prediction)
         normalized = _normalize_heatmap(attention_map)
 
         heatmap_resized = cv2.resize((normalized * 255).astype(np.uint8), (image.width, image.height), interpolation=cv2.INTER_LINEAR)
@@ -128,7 +142,8 @@ def generate_heatmap(image: Image.Image, prediction: dict) -> tuple[Optional[Pat
 
         heatmap_path: Optional[Path] = None
         try:
-            filename = f'heatmap_{uuid4().hex}.jpg'
+            safe_id = ''.join(character for character in (verification_id or uuid4().hex) if character.isalnum() or character in {'-', '_'})
+            filename = f'heatmap_{safe_id}.png'
             candidate_path = settings.uploads_dir / filename
             if cv2.imwrite(str(candidate_path), overlay):
                 heatmap_path = candidate_path
@@ -142,8 +157,8 @@ def generate_heatmap(image: Image.Image, prediction: dict) -> tuple[Optional[Pat
         suspicious_regions = _build_regions_from_attention(normalized, prediction)
         return heatmap_path, suspicious_regions, {
             'status': 'available',
-            'method': 'attention-rollout',
+            'method': 'swin-grad-cam',
             'summary': summary,
         }
     except Exception as exc:
-        return None, [], {'status': 'unavailable', 'method': 'attention-rollout', 'summary': {'low': 0, 'moderate': 0, 'high': 0}, 'error': str(exc)}
+        return None, [], {'status': 'unavailable', 'method': 'swin-grad-cam', 'summary': {'low': 0, 'moderate': 0, 'high': 0}, 'error': str(exc)}

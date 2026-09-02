@@ -26,9 +26,9 @@ def _normalize_label_scores(outputs: list[dict], id2label: dict | None = None) -
         fake_key = None
         for _, value in id2label.items():
             label_text = str(value).strip().lower()
-            if label_text.startswith('real'):
+            if label_text.startswith(('real', 'authentic', 'genuine', 'human')):
                 real_key = label_text
-            if label_text.startswith('fake'):
+            if label_text.startswith(('fake', 'deepfake', 'synthetic', 'manipulated', 'artificial', 'generated', 'ai')):
                 fake_key = label_text
         real_probability = normalized.get(real_key, 0.0) if real_key else 0.0
         fake_probability = normalized.get(fake_key, 0.0) if fake_key else 0.0
@@ -44,8 +44,8 @@ def _normalize_label_scores(outputs: list[dict], id2label: dict | None = None) -
                 'confidence': confidence,
             }
 
-    real_probability = normalized.get('real', 0.0) + normalized.get('authentic', 0.0) + normalized.get('genuine', 0.0)
-    fake_probability = normalized.get('fake', 0.0) + normalized.get('deepfake', 0.0) + normalized.get('synthetic', 0.0) + normalized.get('manipulated', 0.0)
+    real_probability = sum(normalized.get(label, 0.0) for label in {'real', 'authentic', 'genuine', 'human'})
+    fake_probability = sum(normalized.get(label, 0.0) for label in {'fake', 'deepfake', 'synthetic', 'manipulated', 'artificial', 'generated', 'ai'})
     if real_probability + fake_probability <= 0:
         for item in outputs:
             label = str(item.get('label', '')).strip().lower()

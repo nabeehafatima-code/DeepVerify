@@ -51,7 +51,7 @@ def export_subset(output_root: Path, samples_per_label: int) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description='Export a small labeled Tiny-GenImage evaluation subset.')
     parser.add_argument('--output', type=Path, default=Path('dataset'))
-    parser.add_argument('--samples-per-label', type=int, default=10)
+    parser.add_argument('--samples-per-label', type=int, default=30)
     args = parser.parse_args()
     manifest = export_subset(args.output, args.samples_per_label)
     print(json.dumps(manifest['counts']))

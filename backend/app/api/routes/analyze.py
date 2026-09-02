@@ -58,8 +58,9 @@ async def analyze_image(file: UploadFile = File(...)) -> AnalysisResponse:
     probability = prediction['deepfake_probability']
     risk_level = 'high' if probability >= 0.8 else 'medium' if probability >= 0.5 else 'low'
 
+    verification_id = f'DV-{datetime.now(timezone.utc).year}-{uuid4().hex[:8].upper()}'
     try:
-        heatmap_path, suspicious_regions, explainability = generate_heatmap(image, prediction)
+        heatmap_path, suspicious_regions, explainability = generate_heatmap(image, prediction, verification_id)
     except Exception as exc:
         heatmap_path, suspicious_regions, explainability = None, [], {
             'status': 'unavailable',
@@ -83,7 +84,7 @@ async def analyze_image(file: UploadFile = File(...)) -> AnalysisResponse:
     ]
 
     report = AnalysisResponse(
-        verification_id=f'DV-{datetime.now(timezone.utc).year}-{uuid4().hex[:8].upper()}',
+        verification_id=verification_id,
         media_type='image',
         filename=file.filename or 'uploaded-image',
         file_size=f'{len(contents) / (1024 * 1024):.2f} MB',
