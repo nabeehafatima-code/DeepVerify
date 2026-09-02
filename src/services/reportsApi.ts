@@ -19,8 +19,9 @@ type BackendReport = {
   suspicious_regions: NonNullable<VerificationReport['suspiciousRegions']>;
   timestamp: string;
   model_version: string;
-  model_details: Partial<VerificationReport['modelDetails']>;
+  model_details: Partial<VerificationReport['modelDetails']> & { heatmapUrl?: string };
   media_preview_url?: string;
+  heatmap_url?: string | null;
   status: VerificationReport['status'];
 };
 
@@ -51,6 +52,15 @@ function mapReport(data: BackendReport): VerificationReport {
       datasetTrained: data.model_details?.datasetTrained || 'Not provided by backend',
     },
     mediaPreviewUrl: data.media_preview_url,
+    heatmapUrl: data.heatmap_url
+      ? (data.heatmap_url.startsWith('http') || data.heatmap_url.startsWith('/')
+          ? data.heatmap_url
+          : `${API_BASE_URL}${data.heatmap_url.startsWith('/') ? data.heatmap_url : `/${data.heatmap_url}`}`)
+      : (data.model_details?.heatmapUrl
+          ? (data.model_details.heatmapUrl.startsWith('http') || data.model_details.heatmapUrl.startsWith('/')
+              ? data.model_details.heatmapUrl
+              : `${API_BASE_URL}${data.model_details.heatmapUrl.startsWith('/') ? data.model_details.heatmapUrl : `/${data.model_details.heatmapUrl}`}`)
+          : undefined),
     status: data.status,
   };
 }

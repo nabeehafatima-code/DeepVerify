@@ -11,7 +11,7 @@ from app.schemas.analysis import AnalysisResponse
 from app.services.inference_service import ModelNotConfiguredError, get_inference_service
 from app.services.preprocessing import decode_image, validate_image_pixels
 from app.services.report_service import save_report
-from app.services.explainability import generate_heatmap
+from app.services.explainability_service import generate_heatmap
 from app.services.video_service import VideoDecodeError, probe_and_sample_frames
 from app.services.audio_service import AudioDecodeError, analyze_spectral_artifacts, decode_wav
 
@@ -59,12 +59,20 @@ async def analyze_image(file: UploadFile = File(...)) -> AnalysisResponse:
     risk_level = 'high' if probability >= 0.8 else 'medium' if probability >= 0.5 else 'low'
 
     try:
-        heatmap_path, suspicious_regions = generate_heatmap(image, prediction)
+        heatmap_path, suspicious_regions, explainability = generate_heatmap(image, prediction)
     except Exception as exc:
-        heatmap_path, suspicious_regions = None, []
+        heatmap_path, suspicious_regions, explainability = None, [], {
+            'status': 'unavailable',
+            'method': 'attention-rollout',
+            'summary': {'low': 0, 'moderate': 0, 'high': 0},
+            'error': str(exc),
+        }
         print(f'Heatmap generation failed: {exc}')
 
     heatmap_url = f'/uploads/{heatmap_path.name}' if heatmap_path else None
+    explainability_status = explainability.get('status', 'unavailable')
+    explainability_method = explainability.get('method', 'attention-rollout')
+    attention_summary = explainability.get('summary', {'low': 0, 'moderate': 0, 'high': 0})
 
     explanation = [
         'Classification probability returned by the configured image detector.',
@@ -97,11 +105,22 @@ async def analyze_image(file: UploadFile = File(...)) -> AnalysisResponse:
             'sha256Checksum': sha256_checksum,
             'datasetTrained': settings.model_dataset_label,
             'raw_outputs': prediction.get('raw_outputs'),
+            'raw_logits': prediction.get('raw_logits'),
+            'debug': prediction.get('debug'),
             'heatmap_path': str(heatmap_path) if heatmap_path else None,
             'heatmapUrl': heatmap_url,
+            'explainability_status': explainability_status,
+            'explainability_method': explainability_method,
+            'attention_summary': attention_summary,
+            'threshold': prediction.get('threshold', 0.5),
+            'preprocessing': prediction.get('preprocessing'),
         },
         timestamp=datetime.now(timezone.utc),
         model_version=settings.model_version,
+        heatmap_url=heatmap_url,
+        explainability_method=explainability_method,
+        explainability_status=explainability_status,
+        attention_summary=attention_summary,
     )
     save_report(report)
     return report

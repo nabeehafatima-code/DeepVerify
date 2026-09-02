@@ -14,8 +14,12 @@ __pycache__/
 backend/uploads/*
 backend/results/*
 backend/reports/*
+backend/dataset/*
 
 # Keep folder structure
 !backend/uploads/.gitkeep
 !backend/results/.gitkeep
 !backend/reports/.gitkeep
+!backend/dataset/.gitkeep
+!backend/dataset/real/.gitkeep
+!backend/dataset/fake/.gitkeep

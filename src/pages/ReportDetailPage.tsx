@@ -256,6 +256,7 @@ export const ReportDetailPage: React.FC = () => {
           {report.mediaType === 'image' && (
             <HeatmapPanel
               imageUrl={report.mediaPreviewUrl}
+              heatmapUrl={report.heatmapUrl}
               suspiciousRegions={report.suspiciousRegions}
               filename={report.filename}
               isDeepfake={report.prediction === 'deepfake'}

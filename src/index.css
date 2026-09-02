@@ -7,12 +7,28 @@
     --bg-dark-base: #020617;
     --bg-card-dark: #0f172a;
     --bg-footer-dark: #0a0c14;
+    --bg-light-base: #f8fafc;
+    --bg-card-light: #ffffff;
+    --bg-footer-light: #f1f5f9;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
   }
 
   body {
     font-family: var(--font-sans);
     background-color: #020617;
     color: #cbd5e1;
+  }
+
+  html.light body {
+    background-color: #f8fafc;
+    color: #1e293b;
   }
 
   code, pre, .font-mono {
@@ -34,6 +50,19 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 1);
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.8);
+  border-radius: 9999px;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 1);
 }
 
 /* Print Styles for Verification Reports */

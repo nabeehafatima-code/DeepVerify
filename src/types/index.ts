@@ -78,6 +78,7 @@ export interface VerificationReport {
   modelVersion: string;
   modelDetails: ModelDetails;
   mediaPreviewUrl?: string;
+  heatmapUrl?: string;
   duration?: string;
   resolution?: string;
   sampleRate?: string;

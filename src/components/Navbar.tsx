@@ -25,6 +25,7 @@ export const Navbar: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [apiModalOpen, setApiModalOpen] = useState(false);
+  const isDarkMode = theme === 'dark';
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -42,7 +43,7 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="no-print sticky top-0 z-40 w-full border-b border-slate-800 bg-[#020617]/85 backdrop-blur-md transition-all">
+      <header className={`no-print sticky top-0 z-40 w-full ${isDarkMode ? 'border-slate-800 bg-[#020617]/85' : 'border-slate-200 bg-white/85'} border-b transition-all ${isDarkMode ? 'backdrop-blur-md' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Brand Logo */}
@@ -57,21 +58,21 @@ export const Navbar: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg tracking-tight text-white uppercase font-sans">
+                <span className={`font-bold text-lg tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase font-sans`}>
                   Deep<span className="text-cyan-400">Verify</span>
                 </span>
-                <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-800/60 text-cyan-300">
+                <span className={`text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded ${isDarkMode ? 'bg-cyan-950/80 border-cyan-800/60 text-cyan-300' : 'bg-cyan-100 border-cyan-300 text-cyan-700'} border`}>
                   SIH'26
                 </span>
               </div>
-              <span className="text-[9px] tracking-widest text-slate-500 font-semibold uppercase -mt-0.5 hidden sm:block">
+              <span className={`text-[9px] tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-600'} font-semibold uppercase -mt-0.5 hidden sm:block`}>
                 DETECT · VERIFY · TRUST
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 border border-slate-800/60 rounded-full px-3 py-1 shadow-inner">
+          <nav className={`hidden md:flex items-center gap-1 ${isDarkMode ? 'bg-slate-900/60 border-slate-800/60' : 'bg-slate-100/60 border-slate-300/60'} border rounded-full px-3 py-1 shadow-inner`}>
             {navLinks.map((link) => {
               const active = isActive(link.path);
               return (
@@ -81,14 +82,14 @@ export const Navbar: React.FC = () => {
                   id={`nav-link-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
                   className={`relative px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
                     active
-                      ? 'text-white'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                      ? isDarkMode ? 'text-white' : 'text-slate-900'
+                      : isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/40'
                   }`}
                 >
                   {active && (
                     <motion.div
                       layoutId="nav-pill"
-                      className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border border-cyan-500/40 shadow-sm shadow-cyan-500/20"
+                      className={`absolute inset-0 rounded-full ${isDarkMode ? 'bg-gradient-to-r from-cyan-600/30 to-blue-600/30 border-cyan-500/40 shadow-cyan-500/20' : 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-cyan-400/40 shadow-cyan-400/20'} border shadow-sm`}
                       transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                     />
                   )}
@@ -105,7 +106,7 @@ export const Navbar: React.FC = () => {
             <button
               onClick={() => setApiModalOpen(true)}
               id="api-status-button"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 text-xs font-mono text-slate-300 hover:text-cyan-300 hover:border-cyan-500/40 transition-all"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border ${isDarkMode ? 'border-slate-800 bg-slate-900/80 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/40' : 'border-slate-300 bg-slate-100/80 text-slate-600 hover:text-cyan-600 hover:border-cyan-400/40'} text-xs font-mono transition-all`}
               title="FastAPI & System Architecture Status"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -119,12 +120,12 @@ export const Navbar: React.FC = () => {
               onClick={toggleTheme}
               id="theme-toggle-btn"
               aria-label="Toggle Theme"
-              className="p-2 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-300 hover:text-white hover:border-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className={`p-2 rounded-lg border ${isDarkMode ? 'border-slate-800 bg-slate-900/80 text-slate-300 hover:text-white hover:border-slate-700' : 'border-slate-300 bg-slate-100/80 text-slate-600 hover:text-slate-900 hover:border-slate-400'} transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500`}
             >
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-cyan-400" />
+                <Moon className="w-4 h-4 text-cyan-600" />
               )}
             </button>
 
@@ -143,7 +144,7 @@ export const Navbar: React.FC = () => {
               onClick={() => setMobileMenuOpen(prev => !prev)}
               id="mobile-menu-toggle-btn"
               aria-label="Open navigation menu"
-              className="md:hidden p-2 rounded-lg border border-slate-800 bg-slate-900 text-slate-300 hover:text-white"
+              className={`md:hidden p-2 rounded-lg border ${isDarkMode ? 'border-slate-800 bg-slate-900 text-slate-300 hover:text-white' : 'border-slate-300 bg-slate-100 text-slate-600 hover:text-slate-900'}`}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -157,7 +158,7 @@ export const Navbar: React.FC = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-b border-slate-800 bg-slate-950/95 backdrop-blur-2xl px-4 py-4 space-y-2"
+              className={`md:hidden border-b ${isDarkMode ? 'border-slate-800 bg-slate-950/95 backdrop-blur-2xl' : 'border-slate-200 bg-slate-50/95'} px-4 py-4 space-y-2`}
             >
               {navLinks.map((link) => {
                 const active = isActive(link.path);
@@ -168,9 +169,9 @@ export const Navbar: React.FC = () => {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       active
-                        ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                        : 'text-slate-300 hover:bg-slate-900'
-                    }`}
+                        ? isDarkMode ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' : 'bg-cyan-100 text-cyan-700 border-cyan-300'
+                        : isDarkMode ? 'text-slate-300 hover:bg-slate-900' : 'text-slate-600 hover:bg-slate-200'
+                    } ${active ? 'border' : ''}`}
                   >
                     <span>{link.name}</span>
                     {active && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
@@ -196,33 +197,33 @@ export const Navbar: React.FC = () => {
       {/* System & FastAPI Specs Modal */}
       <AnimatePresence>
         {apiModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDarkMode ? 'bg-slate-950/80 backdrop-blur-md' : 'bg-black/40'}`}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900/95 p-6 shadow-2xl text-slate-200"
+              className={`relative w-full max-w-xl rounded-2xl border ${isDarkMode ? 'border-slate-800 bg-slate-900/95 text-slate-200' : 'border-slate-300 bg-white text-slate-900'} p-6 shadow-2xl`}
             >
               <button
                 onClick={() => setApiModalOpen(false)}
-                className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                className={`absolute top-4 right-4 p-1.5 rounded-lg ${isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'} transition-all`}
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-3 pb-4 border-b border-slate-800">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <div className={`flex items-center gap-3 pb-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-300'}`}>
+                <div className={`w-10 h-10 rounded-xl ${isDarkMode ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-cyan-100 border-cyan-300 text-cyan-600'} border flex items-center justify-center`}>
                   <Terminal className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">System & FastAPI Integration Architecture</h3>
-                  <p className="text-xs text-slate-400 font-mono">Service Layer: /src/services/mockApi.ts</p>
+                  <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>System & FastAPI Integration Architecture</h3>
+                  <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} font-mono`}>Service Layer: /src/services/mockApi.ts</p>
                 </div>
               </div>
 
               <div className="mt-4 space-y-3.5 text-xs">
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 font-mono">
-                  <div className="flex items-center justify-between text-slate-400 mb-1.5">
+                <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-slate-950 border-slate-800/80' : 'bg-slate-100 border-slate-300'} border font-mono`}>
+                  <div className={`flex items-center justify-between ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-1.5`}>
                     <span>Backend Status:</span>
                     <span className="text-emerald-400 flex items-center gap-1">
                       <CheckCircle className="w-3.5 h-3.5" /> Ready for FastAPI Endpoints

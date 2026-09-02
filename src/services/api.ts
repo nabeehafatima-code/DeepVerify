@@ -24,11 +24,19 @@ type BackendAnalysisResponse = {
   sample_rate?: string;
   timestamp: string;
   model_version: string;
-  model_details: VerificationReport['modelDetails'];
+  model_details: VerificationReport['modelDetails'] & { heatmapUrl?: string };
+  heatmap_url?: string | null;
   status: 'completed';
 };
 
 function toVerificationReport(data: BackendAnalysisResponse, previewUrl: string): VerificationReport {
+  const rawHeatmapUrl = (data.heatmap_url || data.model_details?.heatmapUrl || '').trim();
+  const heatmapUrl = rawHeatmapUrl
+    ? rawHeatmapUrl.startsWith('http')
+      ? rawHeatmapUrl
+      : `${API_BASE_URL}${rawHeatmapUrl.startsWith('/') ? rawHeatmapUrl : `/${rawHeatmapUrl}`}`
+    : undefined;
+
   return {
     verificationId: data.verification_id,
     filename: data.filename,
@@ -53,6 +61,7 @@ function toVerificationReport(data: BackendAnalysisResponse, previewUrl: string)
     modelVersion: data.model_version,
     modelDetails: data.model_details,
     mediaPreviewUrl: previewUrl,
+    heatmapUrl: heatmapUrl,
     status: data.status,
   };
 }

@@ -443,6 +443,7 @@ export const AnalyzePage: React.FC = () => {
             {result.mediaType === 'image' && (
               <HeatmapPanel
                 imageUrl={result.mediaPreviewUrl}
+                heatmapUrl={result.heatmapUrl}
                 suspiciousRegions={result.suspiciousRegions}
                 filename={result.filename}
                 isDeepfake={result.prediction === 'deepfake'}

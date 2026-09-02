@@ -37,4 +37,8 @@ class AnalysisResponse(BaseModel):
     model_version: str
     model_details: dict
     media_preview_url: str | None = None
+    heatmap_url: str | None = None
+    explainability_method: str | None = None
+    explainability_status: Literal['available', 'unavailable'] = 'unavailable'
+    attention_summary: dict | None = None
     status: Literal['completed'] = 'completed'
